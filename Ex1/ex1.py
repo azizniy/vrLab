@@ -1,5 +1,9 @@
 import math
 
+#NAMES
+# Gareth Rendle 119027
+# Aziz Niyazov 119029
+
 
 #Exercise 1.1 ----------------------------------------
 
@@ -12,7 +16,7 @@ class TMatrix:
 			self.values = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
 		else:
 			for i in range( len(args[0]) ):
-				input[i] = args[0][i]
+				input[i] = round( args[0][i] ,8)
 			self.values = [input[0:4], input[4:8], input[8:12], input[12:16]]
 
 	def mult(self, other_matrix):
@@ -27,7 +31,8 @@ class TMatrix:
 				sum = 0
 				for i in range(4):
 					sum += self.values[row][i] * other_matrix.values[i][col]
-				rtn_mat[row][col] = sum
+				rtn_mat[row][col] = round(sum,8)
+				# rtn_mat[row][col] = sum
 
 		return rtn_mat
 
@@ -45,25 +50,11 @@ class TMatrix:
 	def __eq__(self, other):
 		for row in range (4):
 			for col in range(4):
-				if self.values[row][col] != other.values[row][col]:
+				if round(self.values[row][col],2) != round(other.values[row][col],2):
 					return False
 
 
-# print("Mat 1")
-# mat1 = TMatrix()
 
-# print("Mat 2")
-# mat2 = TMatrix([0,1,2,3,4,5,6,7,5])
-
-#test type comparison
-# TMatrix.mult(mat1,"egg")
-
-A = TMatrix([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
-B = TMatrix([1,3,5,7,9,11,13,15,2,4,6,8,10,12,14,16])
-
-print("A x B =")
-result = TMatrix.mult(A, B)
-print(result)
 
 
 #Exercise 1.2 ----------------------------------------
@@ -81,18 +72,8 @@ def make_rot_mat(degree,axis):
 		return TMatrix([math.cos(d),-math.sin(d),0,0,math.sin(d),math.cos(d),0,0,0,0,1,0,0,0,0,1])
 
 
-
 def make_scale_mat(sx, sy, sz):
 	return TMatrix([sx,0,0,0,0,sy,0,0,0,0,sz,0,0,0,0,1])
-
-
-print(make_trans_mat(1,2,3).values)
-print(make_rot_mat(45,'x').values)
-print(make_rot_mat(90, 'y').values)
-print(make_rot_mat(120, 'z').values)
-print(make_scale_mat(1,2,3).values)
-
-
 
 #Exercise 1.3----------------------------------------
 
@@ -126,29 +107,90 @@ class Vector4:
 
 	def __str__(self):
 		return "(" + str(self.x) + "," + str(self.y) + "," +  str(self.z) + "," +  str(self.w) + ")"
-		
+
 def euclidean_distance(point1,point2):
 
 	dist = math.pow((point1.x - point2.x), 2)
 	dist += math.pow((point1.y - point2.y) ,2)
 	dist += math.pow((point1.z - point2.z) ,2)
+	dist += math.pow((point1.w - point2.w) ,2)
 	dist = math.sqrt(dist)
 	return dist
 
-print(euclidean_distance(Vector4(2, 4, 6, 2), Vector4(0, 0, 0, 1)))
+
+def main():
+	print("VR EXERCISES: WEEK 1\n")
 
 
-#Exercise 1.4 ----------------------------------------
+	print('Exercise 1.1: A . B\n')
+	A = TMatrix([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+	B = TMatrix([1,3,5,7,9,11,13,15,2,4,6,8,10,12,14,16])
 
-print("A * v = ")
-v = Vector4(1,2,3,1)
-print(A.mult_vec(v))
+	print("A x B =")
+	result = TMatrix.mult(A, B)
+	print(result)
 
+	print('\n-------------------------------------\n')
+
+
+	print('Exercise 1.2\n')
+
+	print('make_trans_mat(1,2,3)')
+	print(make_trans_mat(1,2,3).values)
+	print('make_rot_mat(45,x)')
+	print(make_rot_mat(45,'x').values)
+	print('make_rot_mat(90, y)')
+	print(make_rot_mat(90, 'y').values)
+	print('make_rot_mat(120, z)')
+	print(make_rot_mat(120, 'z').values)
+	print('make_scale_mat(1,2,3)')
+	print(make_scale_mat(1,2,3).values)
+
+
+
+	print('\n-------------------------------------\n')
+
+		
+
+	print('Exercise 1.3\n')
+	print('euclidean_distance(Vector4(2, 4, 6, 2), Vector4(0, 0, 0, 1):')
+
+	print(euclidean_distance(Vector4(2, 4, 6, 2), Vector4(0, 0, 0, 1)))
+
+
+	print('\n-------------------------------------\n')
+
+
+	print('Exercise 1.4\n')
+
+	print("A * v = ")
+	v = Vector4(1,2,3,1)
+	print(A.mult_vec(v))
+
+
+	print('\n-------------------------------------\n')
+
+
+	print('Exercise 1.5\n')
+	print('alpha = 274, beta = 86')
+	print('Alpha and beta should sum to 360')
+	print('these matrices are the same:')
+
+	alpha = 274
+	beta = 86
+	ls = make_rot_mat(90,'x').mult(make_rot_mat(alpha, 'z'))
+	rs = make_rot_mat(beta,'y').mult(make_rot_mat(90, 'x'))
+
+	print("ls: " + str(ls))
+	print("rs: " + str(rs))
+
+
+	print('Exercise 1.6: illustration\n')
 
 #Exercise 1.5 ----------------------------------------
 
-#alpha and beta can both be 0
 
+# loop for finding equal matrices
 # for i in range(360):
 # 	for j in range(1,360):
 # 		alpha = i
@@ -164,13 +206,7 @@ print(A.mult_vec(v))
 
 
 
-alpha = 90
-beta = 180
-ls = make_rot_mat(90,'x').mult(make_rot_mat(alpha, 'z'))
-rs = make_rot_mat(beta,'y').mult(make_rot_mat(90, 'x'))
-
-print("ls: " + str(ls))
-print("rs: " + str(rs))
-
 #Exercise 1.6 ----------------------------------------
 #drawing...
+
+main()
