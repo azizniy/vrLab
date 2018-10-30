@@ -36,6 +36,8 @@ class SolarObject:
         self.orbit_radius = ORBIT_RADIUS
 
         self.rotation_inclination = ROTATION_INCLINATION
+        self.rotation_duration = ROTATION_DURATION
+
 
         self.orbit_velocity = 0.001
         self.rotation_velocity = 0.001
@@ -72,16 +74,25 @@ class SolarObject:
         # init transformation nodes for specific solar object aspects
 
         self.orbit_radius_node = avango.gua.nodes.TransformNode(Name = NAME + "_orbit_radius_node")
-        self.orbit_radius_node.Children.value = [self.object_geometry]
+        #self.orbit_radius_node.Children.value = [self.object_geometry]
         self.orbit_radius_node.Transform.value = avango.gua.make_trans_mat(self.orbit_radius, 0.0, 0.0)
-        PARENT_NODE.Children.value.append(self.orbit_radius_node)
-
-        ## TODO: create further scenegraph nodes below here
+       # PARENT_NODE.Children.value.append(self.orbit_radius_node)
 
 
+         ## TODO: create further scenegraph nodes below here
+        self.orbit_inclination_node = avango.gua.nodes.TransformNode(Name = NAME + "_orbit_inclination_node")
+        self.orbit_inclination_node.Children.value = [self.orbit_radius_node]
+        self.orbit_inclination_node.Transform.value = avango.gua.make_rot_mat(ORBIT_INCLINATION, 0.0, 0.0, 1.0)
+        PARENT_NODE.Children.value.append(self.orbit_inclination_node)
+
+        #adding axes
+        self.rotation_inclination_node = avango.gua.nodes.TransformNode(Name = NAME + "_rotation_inclination_node")
+        self.rotation_inclination_node.Children.value = [self.object_geometry]
+        self.rotation_inclination_node.Transform.value = avango.gua.make_rot_mat(ROTATION_INCLINATION, 0.0, 0.0, 1.0)
+        self.orbit_radius_node.Children.value.append(self.rotation_inclination_node)
 
         ## TODO: create orbit visualization below here
-        self.orbit_viz = OrbitVisualization(PARENT_NODE, self.orbit_radius)
+        self.orbit_viz = OrbitVisualization(self.orbit_inclination_node, self.orbit_radius)# parent = orbit_incl_node
 
         # Triggers framewise evaluation of respective callback method
         self.frame_trigger = avango.script.nodes.Update(Callback = self.frame_callback, Active = True)
@@ -99,8 +110,12 @@ class SolarObject:
 
 
     def update_rotation(self):
-        pass
         ## TODO: fill this function with code
+        self.rotation_inclination_node.Transform.value = self.rotation_inclination_node.Transform.value * \
+            avango.gua.make_rot_mat(self.rotation_velocity * self.sf_time_scale_factor.value * self.rotation_duration , 0.0, 1.0, 0.0) 
+            
+       
+
 
 
     ### callback functions ###

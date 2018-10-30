@@ -67,7 +67,7 @@ class SolarSystem(avango.script.Script):
         self.earth = SolarObject(
             NAME = "earth",
             TEXTURE_PATH = SP.EARTH_TEXTURE,
-            PARENT_NODE = self.sun.get_orbit_node(),
+            PARENT_NODE = PARENT_NODE,
             SF_TIME_SCALE = self.sf_time_scale_factor,
             DIAMETER = SP.EARTH_DIAMETER,
             ORBIT_RADIUS = SP.EARTH_ORBIT_RADIUS,
