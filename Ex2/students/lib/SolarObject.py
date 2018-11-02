@@ -19,9 +19,9 @@ class SolarObject:
         DIAMETER = 1.0,
         ORBIT_RADIUS = 1.0,
         ORBIT_INCLINATION = 0.0, # in degrees
-        ORBIT_DURATION = 0.0,
+        ORBIT_DURATION = 1.0,
         ROTATION_INCLINATION = 0.0, # in degrees
-        ROTATION_DURATION = 0.0
+        ROTATION_DURATION = 1.0
         ):
 
         if PARENT_NODE is None: # guard
@@ -30,6 +30,9 @@ class SolarObject:
 
 
         ### parameters ###
+
+        self.name = NAME
+
         self.sf_time_scale_factor = SF_TIME_SCALE        
 
         self.diameter = DIAMETER
@@ -38,6 +41,7 @@ class SolarObject:
         self.rotation_inclination = ROTATION_INCLINATION
         self.rotation_duration = ROTATION_DURATION
 
+        self.orbit_duration = ORBIT_DURATION
 
         self.orbit_velocity = 0.001
         self.rotation_velocity = 0.001
@@ -55,6 +59,7 @@ class SolarObject:
         
         if NAME == "sun":
             self.object_geometry.Material.value.set_uniform("Emissivity", 1.0)
+            self.orbit_velocity = 0
             
 
         self.axis_red_geometry = _loader.create_geometry_from_file("axis_red", "data/objects/cylinder.obj", avango.gua.LoaderFlags.DEFAULTS)
@@ -76,7 +81,7 @@ class SolarObject:
         self.orbit_radius_node = avango.gua.nodes.TransformNode(Name = NAME + "_orbit_radius_node")
         #self.orbit_radius_node.Children.value = [self.object_geometry]
         self.orbit_radius_node.Transform.value = avango.gua.make_trans_mat(self.orbit_radius, 0.0, 0.0)
-       # PARENT_NODE.Children.value.append(self.orbit_radius_node)
+        self.orbit_radius_node.Children.value.append(self.axis_red_geometry)
 
 
          ## TODO: create further scenegraph nodes below here
@@ -89,6 +94,7 @@ class SolarObject:
         self.rotation_inclination_node = avango.gua.nodes.TransformNode(Name = NAME + "_rotation_inclination_node")
         self.rotation_inclination_node.Children.value = [self.object_geometry]
         self.rotation_inclination_node.Transform.value = avango.gua.make_rot_mat(ROTATION_INCLINATION, 0.0, 0.0, 1.0)
+        self.rotation_inclination_node.Children.value.append(self.axis_green_geometry)
         self.orbit_radius_node.Children.value.append(self.rotation_inclination_node)
 
         ## TODO: create orbit visualization below here
@@ -105,14 +111,14 @@ class SolarObject:
 
     def update_orbit(self):
         self.orbit_radius_node.Transform.value = \
-            avango.gua.make_rot_mat(self.orbit_velocity * self.sf_time_scale_factor.value, 0.0, 1.0, 0.0) * \
+            avango.gua.make_rot_mat(self.orbit_velocity * self.sf_time_scale_factor.value / self.orbit_duration, 0.0, 1.0, 0.0) * \
             self.orbit_radius_node.Transform.value
 
 
     def update_rotation(self):
-        ## TODO: fill this function with code
-        self.rotation_inclination_node.Transform.value = self.rotation_inclination_node.Transform.value * \
-            avango.gua.make_rot_mat(self.rotation_velocity * self.sf_time_scale_factor.value * self.rotation_duration , 0.0, 1.0, 0.0) 
+        if self.rotation_duration > 0:
+            self.rotation_inclination_node.Transform.value = self.rotation_inclination_node.Transform.value * \
+                avango.gua.make_rot_mat(self.rotation_velocity * self.sf_time_scale_factor.value / self.rotation_duration , 0.0, 1.0, 0.0) 
             
        
 

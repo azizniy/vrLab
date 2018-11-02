@@ -39,12 +39,11 @@ class TMatrix:
 	def mult_vec(self, vector):
 		rtn_vec = Vector4(0,0,0,0)
 
-		for col in range(4):
+		for row in range(4):
 			sum = 0
-			for i in range(4):
-				sum += self.values[i][col] * vector[col]
-			rtn_vec[col] = sum
-
+			for col in range(4):
+				sum += self.values[row][col] * vector[col]
+			rtn_vec[row] = sum
 		return rtn_vec
 
 	def __eq__(self, other):
@@ -60,7 +59,7 @@ class TMatrix:
 #Exercise 1.2 ----------------------------------------
 
 def make_trans_mat(x, y, z):
-	return TMatrix([1,0,0,0,0,1,0,0,0,0,1,0,x,y,z,1])
+	return TMatrix([1,0,0,x,0,1,0,y,0,0,1,z,0,0,0,1])
 
 def make_rot_mat(degree,axis):
 	d = math.radians(degree);
@@ -76,6 +75,13 @@ def make_scale_mat(sx, sy, sz):
 	return TMatrix([sx,0,0,0,0,sy,0,0,0,0,sz,0,0,0,0,1])
 
 #Exercise 1.3----------------------------------------
+
+class Vector3:
+	def __init__(self, *args):
+		for x in range(3):
+			self.x = args[0]
+			self.y = args[1]
+			self.z = args[2]
 
 class Vector4:
 	def __init__(self, *args):
@@ -108,12 +114,14 @@ class Vector4:
 	def __str__(self):
 		return "(" + str(self.x) + "," + str(self.y) + "," +  str(self.z) + "," +  str(self.w) + ")"
 
+	def normalise_by_w(self):
+		return Vector3(self.x / self.w, self.y / self.w, self.z / self.w)
+
 def euclidean_distance(point1,point2):
 
 	dist = math.pow((point1.x - point2.x), 2)
 	dist += math.pow((point1.y - point2.y) ,2)
 	dist += math.pow((point1.z - point2.z) ,2)
-	dist += math.pow((point1.w - point2.w) ,2)
 	dist = math.sqrt(dist)
 	return dist
 
@@ -155,7 +163,7 @@ def main():
 	print('Exercise 1.3\n')
 	print('euclidean_distance(Vector4(2, 4, 6, 2), Vector4(0, 0, 0, 1):')
 
-	print(euclidean_distance(Vector4(2, 4, 6, 2), Vector4(0, 0, 0, 1)))
+	print(euclidean_distance(Vector4(2, 4, 6, 2).normalise_by_w(), Vector4(0, 0, 0, 1).normalise_by_w()))
 
 
 	print('\n-------------------------------------\n')

@@ -45,7 +45,7 @@ class SolarSystem(avango.script.Script):
             DIAMETER = SP.SUN_DIAMETER,
             ORBIT_RADIUS = 0.0,
             ORBIT_INCLINATION = 0.0,
-            ORBIT_DURATION = 0.0,
+            ORBIT_DURATION = 1.0,
             ROTATION_INCLINATION = 0.0,
             ROTATION_DURATION = 0.0,
             )
@@ -63,6 +63,33 @@ class SolarSystem(avango.script.Script):
 
 
         ## TODO: init planets and moons below here
+
+        self.mercury = SolarObject(
+            NAME = "mercury",
+            TEXTURE_PATH = SP.MERCURY_TEXTURE,
+            PARENT_NODE = PARENT_NODE,
+            SF_TIME_SCALE = self.sf_time_scale_factor,
+            DIAMETER = SP.MERCURY_DIAMETER,
+            ORBIT_RADIUS = SP.MERCURY_ORBIT_RADIUS,
+            ORBIT_INCLINATION = SP.MERCURY_ORBIT_INCLINATION,
+            ORBIT_DURATION = SP.MERCURY_ORBIT_DURATION,
+            ROTATION_INCLINATION = SP.MERCURY_ROTATION_INCLINATION,
+            ROTATION_DURATION = SP.MERCURY_ROTATION_DURATION
+            )
+
+        self.venus = SolarObject(
+            NAME = "venus",
+            TEXTURE_PATH = SP.VENUS_TEXTURE,
+            PARENT_NODE = PARENT_NODE,
+            SF_TIME_SCALE = self.sf_time_scale_factor,
+            DIAMETER = SP.VENUS_DIAMETER,
+            ORBIT_RADIUS = SP.VENUS_ORBIT_RADIUS,
+            ORBIT_INCLINATION = SP.VENUS_ORBIT_INCLINATION,
+            ORBIT_DURATION = SP.VENUS_ORBIT_DURATION,
+            ROTATION_INCLINATION = SP.VENUS_ROTATION_INCLINATION,
+            ROTATION_DURATION = SP.VENUS_ROTATION_DURATION
+            )
+
         # init Earth
         self.earth = SolarObject(
             NAME = "earth",
@@ -90,6 +117,109 @@ class SolarSystem(avango.script.Script):
             ROTATION_DURATION = SP.EARTH_MOON_ROTATION_DURATION
             )
 
+        self.mars = SolarObject(
+            NAME = "mars",
+            TEXTURE_PATH = SP.MARS_TEXTURE,
+            PARENT_NODE = PARENT_NODE,
+            SF_TIME_SCALE = self.sf_time_scale_factor,
+            DIAMETER = SP.MARS_DIAMETER,
+            ORBIT_RADIUS = SP.MARS_ORBIT_RADIUS,
+            ORBIT_INCLINATION = SP.MARS_ORBIT_INCLINATION,
+            ORBIT_DURATION = SP.MARS_ORBIT_DURATION,
+            ROTATION_INCLINATION = SP.MARS_ROTATION_INCLINATION,
+            ROTATION_DURATION = SP.MARS_ROTATION_DURATION
+            )
+
+        self.jupiter = SolarObject(
+            NAME = "jupiter",
+            TEXTURE_PATH = SP.JUPITER_TEXTURE,
+            PARENT_NODE = PARENT_NODE,
+            SF_TIME_SCALE = self.sf_time_scale_factor,
+            DIAMETER = SP.JUPITER_DIAMETER,
+            ORBIT_RADIUS = SP.JUPITER_ORBIT_RADIUS,
+            ORBIT_INCLINATION = SP.JUPITER_ORBIT_INCLINATION,
+            ORBIT_DURATION = SP.JUPITER_ORBIT_DURATION,
+            ROTATION_INCLINATION = SP.JUPITER_ROTATION_INCLINATION,
+            ROTATION_DURATION = SP.JUPITER_ROTATION_DURATION
+            )
+
+        self.jupiter_moon1 = SolarObject(
+            NAME = "jupiter_moon1",
+            TEXTURE_PATH = SP.JUPITER_MOON1_TEXTURE,
+            PARENT_NODE = self.jupiter.get_orbit_node(),
+            SF_TIME_SCALE = self.sf_time_scale_factor,
+            DIAMETER = SP.JUPITER_MOON1_DIAMETER,
+            ORBIT_RADIUS = SP.JUPITER_MOON1_ORBIT_RADIUS,
+            ORBIT_INCLINATION = SP.JUPITER_MOON1_ORBIT_INCLINATION,
+            ORBIT_DURATION = SP.JUPITER_MOON1_ORBIT_DURATION,
+            ROTATION_INCLINATION = SP.JUPITER_MOON1_ROTATION_INCLINATION,
+            ROTATION_DURATION = SP.JUPITER_MOON1_ROTATION_DURATION
+            )
+
+        self.jupiter_moon2 = SolarObject(
+            NAME = "jupiter_moon2",
+            TEXTURE_PATH = SP.JUPITER_MOON2_TEXTURE,
+            PARENT_NODE = self.jupiter.get_orbit_node(),
+            SF_TIME_SCALE = self.sf_time_scale_factor,
+            DIAMETER = SP.JUPITER_MOON2_DIAMETER,
+            ORBIT_RADIUS = SP.JUPITER_MOON2_ORBIT_RADIUS,
+            ORBIT_INCLINATION = SP.JUPITER_MOON2_ORBIT_INCLINATION,
+            ORBIT_DURATION = SP.JUPITER_MOON2_ORBIT_DURATION,
+            ROTATION_INCLINATION = SP.JUPITER_MOON2_ROTATION_INCLINATION,
+            ROTATION_DURATION = SP.JUPITER_MOON2_ROTATION_DURATION
+            )
+
+        self.jupiter_moon3 = SolarObject(
+            NAME = "jupiter_moon3",
+            TEXTURE_PATH = SP.JUPITER_MOON3_TEXTURE,
+            PARENT_NODE = self.jupiter.get_orbit_node(),
+            SF_TIME_SCALE = self.sf_time_scale_factor,
+            DIAMETER = SP.JUPITER_MOON3_DIAMETER,
+            ORBIT_RADIUS = SP.JUPITER_MOON3_ORBIT_RADIUS,
+            ORBIT_INCLINATION = SP.JUPITER_MOON3_ORBIT_INCLINATION,
+            ORBIT_DURATION = SP.JUPITER_MOON3_ORBIT_DURATION,
+            ROTATION_INCLINATION = SP.JUPITER_MOON3_ROTATION_INCLINATION,
+            ROTATION_DURATION = SP.JUPITER_MOON3_ROTATION_DURATION
+            )
+
+        self.saturn = SolarObject(
+            NAME = "saturn",
+            TEXTURE_PATH = SP.SATURN_TEXTURE,
+            PARENT_NODE = PARENT_NODE,
+            SF_TIME_SCALE = self.sf_time_scale_factor,
+            DIAMETER = SP.SATURN_DIAMETER,
+            ORBIT_RADIUS = SP.SATURN_ORBIT_RADIUS,
+            ORBIT_INCLINATION = SP.SATURN_ORBIT_INCLINATION,
+            ORBIT_DURATION = SP.SATURN_ORBIT_DURATION,
+            ROTATION_INCLINATION = SP.SATURN_ROTATION_INCLINATION,
+            ROTATION_DURATION = SP.SATURN_ROTATION_DURATION
+            )
+
+        self.neptune = SolarObject(
+            NAME = "neptune",
+            TEXTURE_PATH = SP.NEPTUNE_TEXTURE,
+            PARENT_NODE = PARENT_NODE,
+            SF_TIME_SCALE = self.sf_time_scale_factor,
+            DIAMETER = SP.NEPTUNE_DIAMETER,
+            ORBIT_RADIUS = SP.NEPTUNE_ORBIT_RADIUS,
+            ORBIT_INCLINATION = SP.NEPTUNE_ORBIT_INCLINATION,
+            ORBIT_DURATION = SP.NEPTUNE_ORBIT_DURATION,
+            ROTATION_INCLINATION = SP.NEPTUNE_ROTATION_INCLINATION,
+            ROTATION_DURATION = SP.NEPTUNE_ROTATION_DURATION
+            )
+
+        self.uranus = SolarObject(
+            NAME = "uranus",
+            TEXTURE_PATH = SP.URANUS_TEXTURE,
+            PARENT_NODE = PARENT_NODE,
+            SF_TIME_SCALE = self.sf_time_scale_factor,
+            DIAMETER = SP.URANUS_DIAMETER,
+            ORBIT_RADIUS = SP.URANUS_ORBIT_RADIUS,
+            ORBIT_INCLINATION = SP.URANUS_ORBIT_INCLINATION,
+            ORBIT_DURATION = SP.URANUS_ORBIT_DURATION,
+            ROTATION_INCLINATION = SP.URANUS_ROTATION_INCLINATION,
+            ROTATION_DURATION = SP.URANUS_ROTATION_DURATION
+            )
 
 
     ### callback functions ###
@@ -110,5 +240,5 @@ class SolarSystem(avango.script.Script):
 
     ### functions ###
     def set_time_scale_factor(self, FLOAT): 
-        self.sf_time_scale_factor.value = min(10000.0, max(1.0, FLOAT)) # clamp value to reasonable intervall
+        self.sf_time_scale_factor.value = min(1000000.0, max(1.0, FLOAT)) # clamp value to reasonable intervall
         
