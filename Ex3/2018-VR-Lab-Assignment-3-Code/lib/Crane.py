@@ -26,6 +26,8 @@ class Crane:
         self.base_node.Transform.value = avango.gua.make_trans_mat(0.0,-0.1,0.0)
         PARENT_NODE.Children.value.append(self.base_node)
 
+        self.target_list = TARGET_LIST
+
 
         ## init internal sub-classes
         self.input = KeyboardInput()
@@ -55,5 +57,40 @@ class Crane:
             ROT_OFFSET_MAT = avango.gua.make_rot_mat(90.0,1,0,0),
             SF_ROT_INPUT = self.input.sf_rot_input1,
             )
+
+        ## second arm segment
+        self.arm1 = Arm(
+            PARENT_NODE = self.hinge1.hinge_node,
+            LENGTH = 0.08,
+            DIAMETER = 0.005,
+            ROT_OFFSET_MAT = avango.gua.make_rot_mat(-90.0,1,0,0),
+            )
+
+        ## third hinge
+        self.hinge2 = Hinge(
+            PARENT_NODE = self.arm1.arm_end_node,
+            DIAMETER = 0.03,
+            HEIGHT = 0.01,
+            ROT_OFFSET_MAT = avango.gua.make_rot_mat(90.0,1,0,0),
+            SF_ROT_INPUT = self.input.sf_rot_input2,
+            )
+
+
+        ## third arm segment
+        self.arm2 = Arm(
+            PARENT_NODE = self.hinge2.hinge_node,
+            LENGTH = 0.08,
+            DIAMETER = 0.005,
+            ROT_OFFSET_MAT = avango.gua.make_rot_mat(-90.0,1,0,0),
+            )
+
+
+        # # hook segment
+        # self.hook = Hook(
+        #     PARENT_NODE = self.arm2.arm_end_node,
+        #     SIZE = 0.1
+        #     #TARGET_LIST = self.target_list
+        # )
+
 
         
