@@ -20,8 +20,8 @@ class SimpleViewingSetup:
         ):
 
         ### parameters ###
-        self.window_size = avango.gua.Vec2ui(2560, 1440) # in pixels
-        #self.window_size = avango.gua.Vec2ui(1280, 720) # in pixels
+        # self.window_size = avango.gua.Vec2ui(2560, 1440) # in pixels
+        self.window_size = avango.gua.Vec2ui(1280, 720) # in pixels
         self.screen_dimensions = avango.gua.Vec2(0.595, 0.335) # in meter
         self.screen_mat = avango.gua.make_trans_mat(0.0, 0.0, 0.0)
 
