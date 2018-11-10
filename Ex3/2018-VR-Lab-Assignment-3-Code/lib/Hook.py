@@ -42,7 +42,7 @@ class Hook(avango.script.Script):
 
         # world_pos = avango.gua.SFMatrix4()
         # sf_mat.value = self.hook_node.value.get_translate()
-        # self.sf_mat.connect_from(self.hook_node.Transform)
+        self.sf_mat.connect_from(self.hook_node.Transform)
         
 
 
