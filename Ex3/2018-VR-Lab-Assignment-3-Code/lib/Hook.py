@@ -42,7 +42,7 @@ class Hook(avango.script.Script):
 
         # world_pos = avango.gua.SFMatrix4()
         # sf_mat.value = self.hook_node.value.get_translate()
-        self.sf_mat.connect_from(self.hook_node.Transform)
+        self.sf_mat.connect_from(self.hook_node.WorldTransform)
         
 
 
@@ -55,13 +55,13 @@ class Hook(avango.script.Script):
     @field_has_changed(sf_mat)
     def sf_mat_changed(self):
 
-        print("mat chynged)")
+       
 
         _pos = self.sf_mat.value.get_translate() # world position of hook
         
         for _node in self.TARGET_LIST: # iterate over all target nodes
             _bb = _node.BoundingBox.value # get bounding box of a node
-            print(_node.Name.value, _bb.contains(_pos))
+            # print(_node.Name.value, _bb.contains(_pos))
             
             if _bb.contains(_pos) == True: # hook inside bounding box of this node
                 _node.Material.value.set_uniform("Color", avango.gua.Vec4(1.0,0.0,0.0,0.85)) # highlight color
