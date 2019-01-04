@@ -1,0 +1,61 @@
+Gareth Rendle 119027
+Aziz Niyazov 119029
+
+
+
+ISOTONIC
+-------------------------------------------------
+
+POSITION:
+
+Go-Go virtual hand control. Position of the tracked hand or controller changes the position of the virtual hand. Even though the mapping is not isomorphic at distances further from the user, it is still isotonic (no resistance to hand movement in motor space). 
+
+
+RATE:
+
+Auto-scrolling through long text documents in word. Usually triggered by holding/pressing down scroll wheel. Moving mouse either up or down scrolls document up or down. Distance moved from starting point increases speed of scrolling.
+
+
+ACCELERATION:
+
+Tilt-maze game. position of the controller (e.g. a smartphone for tablet) affects the acceleration of the on-screen ball. A small tilt produces a small acceleration as the ball is affected by virtual gravity. A large tilt produces a fast acceleration. No tilt means no acceleration, the ball will stay at constant speed (unless other forces are modelled in the virtual environment). The controller is isotonic - no resistance to movement. 
+
+
+
+---------------------------------------------------
+ELASTIC
+---------------------------------------------------
+
+POSITION:
+
+Guitar playing controller: for the right hand that hits the strings, the displacement of the virtual hand is controlled by the displacement of the controller and would affect how many strings are played. Controller snaps back to above the strings, as a useful reference point (as in Guitar Hero).
+
+
+
+RATE:
+
+Navigation through a world - can take many forms, including driving, flying etc. A concrete example could be moving a humanoid avatar around a virtual world using a 2DOF joystick.
+
+
+ACCELERATION:
+
+Driving a space ship in a 3D world. Pushing an elastic control forward increases acceleration, and when the controller is released the speed stays constant. Moving the controller backwards would slow down.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

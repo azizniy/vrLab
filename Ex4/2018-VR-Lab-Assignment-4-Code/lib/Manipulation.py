@@ -186,25 +186,22 @@ class ManipulationManager(avango.script.Script):
                 _node.Material.value.set_uniform("Color", _node.CurrentColor.value) # switch to dragging material
                 self.dragged_objects_list.append(_node) # add node for dragging
 
+                #compute and save difference between hand position and node position 
                 _node.DraggingOffsetMatrix.value = avango.gua.make_inverse_mat(_hand_mat) *\
                 (_node.WorldTransform.value * avango.gua.make_inverse_mat(_node.Transform.value))* _node.Transform.value
 
-                ## TODO: add code if necessary
         print(str(len(self.dragged_objects_list)) + ' monkeys in the list\n')
 
 
     ## This function is called while the dragging button
     ## (e.g. mouse button for isotonic input) is pressed
     def object_dragging(self):
-        pass
-        ## TODO: add code if necessary
 
         #get world position of hand
         _hand_mat = self.hand_transform.WorldTransform.value
 
+        #update world position of nodes in dragged list
         for _node in self.dragged_objects_list:
-
-          
            _node.Transform.value = avango.gua.make_inverse_mat(_node.WorldTransform.value * avango.gua.make_inverse_mat(_node.Transform.value)) * _hand_mat * _node.DraggingOffsetMatrix.value
 
 
@@ -221,11 +218,8 @@ class ManipulationManager(avango.script.Script):
     
         self.dragged_objects_list = [] # clear list
 
-        ## TODO: add code if necessary
-
  
     ########################## End of Exercise 4.2
-
 
     def update_dragging_candidates(self):
         _hand_pos = self.hand_transform.WorldTransform.value.get_translate()
@@ -459,15 +453,10 @@ class IsotonicRateControlManipulation(Manipulation):
 
         #accumulate input as speed
         self.rel_position += avango.gua.Vec3(_x,_y,_z)
+        velocity = self.rel_position
 
-        speed = self.rel_position.length()
-        direction = avango.gua.Vec3(0,0,0)
-        print("speed - " +str(speed))
-
-        if speed > 0:
-            direction = self.rel_position / speed
-
-        _new_mat = avango.gua.make_trans_mat(direction * speed) * self.sf_mat.value
+        # _new_mat = avango.gua.make_trans_mat(direction * speed) * self.sf_mat.value
+        _new_mat = avango.gua.make_trans_mat(velocity) * self.sf_mat.value
 
         # possibly clamp matrix (to screen space borders)
         _new_mat = self.clamp_matrix(_new_mat)
@@ -496,8 +485,6 @@ class IsotonicAccelerationControlManipulation(Manipulation):
         self.velocity = avango.gua.Vec3(0,0,0)
 
 
-
-
     ## implement respective base-class function
     def manipulate(self):
         
@@ -509,11 +496,8 @@ class IsotonicAccelerationControlManipulation(Manipulation):
         _y *= 0.0001
         _z *= 0.0001
 
-
-
         #accumulate input as speed
         self.rel_position += avango.gua.Vec3(_x,_y,_z)
-
         accel = self.rel_position 
 
         self.velocity += accel
@@ -521,17 +505,12 @@ class IsotonicAccelerationControlManipulation(Manipulation):
         previous_mat = self.sf_mat.value
         _new_mat = avango.gua.make_trans_mat(self.velocity) * self.sf_mat.value
 
-        print("speed - " +str(self.velocity.length()))
-       
-        # possibly clamp matrix (to screen space borders)
         _new_mat = self.clamp_matrix(_new_mat)
 
         if previous_mat == _new_mat:
             self.velocity = avango.gua.Vec3(0,0,0)
-            print("reset velocity to 0")
 
         self.sf_mat.value = _new_mat # apply new matrix to field
-
 
     ## implement respective base-class function
     def reset(self):
@@ -556,7 +535,6 @@ class ElasticPositionControlManipulation(Manipulation):
         # init field connections
         self.mf_dof.connect_from(MF_DOF)
         self.mf_buttons.connect_from(MF_BUTTONS)
-        # self.start_position.value = avango.gua.make_identity_mat()
 
 
     ## implement respective base-class function
@@ -571,7 +549,6 @@ class ElasticPositionControlManipulation(Manipulation):
        
         # accumulate input
         _new_mat = avango.gua.make_trans_mat(_x, _y, _z)
-        print('X ' +str(_x))
 
         # possibly clamp matrix (to screen space borders)
         _new_mat = self.clamp_matrix(_new_mat)
@@ -600,28 +577,19 @@ class ElasticRateControlManipulation(Manipulation):
     def manipulate(self):
         _x = self.mf_dof.value[0]
         _y = self.mf_dof.value[1]
-        _z = self.mf_dof.value[2]
+        _z = 0
 
-        _x *= 0.001
-        _y *= 0.001
-        _z *= 0.001
+        _x *= 0.005
+        _y *= 0.005
+        _z *= 0.005
 
 
         #accumulate input as speed
         self.rel_position = avango.gua.Vec3(_x,_y,_z)
+        velocity = self.rel_position
 
-
-        print('pos = ' + str(self.rel_position))
-
-        speed = self.rel_position.length()
-        #init direction
-        direction = avango.gua.Vec3(0,0,0)
-        print("speed - " +str(speed))
-
-        if speed > 0:
-            direction = self.rel_position / speed
-
-        _new_mat = avango.gua.make_trans_mat(direction * speed) * self.sf_mat.value
+        # _new_mat = avango.gua.make_trans_mat(direction * speed) * self.sf_mat.value
+        _new_mat = avango.gua.make_trans_mat(velocity) * self.sf_mat.value
 
         # possibly clamp matrix (to screen space borders)
         _new_mat = self.clamp_matrix(_new_mat)
@@ -637,21 +605,45 @@ class ElasticAccelerationControlManipulation(Manipulation):
 
     def my_constructor(self, MF_DOF, MF_BUTTONS):
         self.type = "elastic-acceleration-control"
-
         # init field connections
         self.mf_dof.connect_from(MF_DOF)
         self.mf_buttons.connect_from(MF_BUTTONS)
 
+        self.velocity = avango.gua.Vec3(0,0,0)
 
     ## implement respective base-class function
-    def manipulate(self): 
-        pass
-        # TODO: add code
-             
+    def manipulate(self):
+        
+        _x = self.mf_dof.value[0]
+        _y = self.mf_dof.value[1]
+        _z = 0
+
+        _x *= 0.0001
+        _y *= 0.0001
+        _z *= 0.0001
+
+        #accumulate input as speed
+        self.rel_position = avango.gua.Vec3(_x,_y,_z)
+        accel = self.rel_position 
+
+        self.velocity += accel
+
+        previous_mat = self.sf_mat.value
+        _new_mat = avango.gua.make_trans_mat(self.velocity) * self.sf_mat.value
+
+       
+        # possibly clamp matrix (to screen space borders)
+        _new_mat = self.clamp_matrix(_new_mat)
+
+        if previous_mat == _new_mat:
+            self.velocity = avango.gua.Vec3(0,0,0)
+
+        self.sf_mat.value = _new_mat # apply new matrix to field
+
 
     ## implement respective base-class function
     def reset(self):
-        pass
-        # TODO: add code
-        
+        self.sf_mat.value = avango.gua.make_identity_mat()
+        self.rel_position = avango.gua.Vec3(0,0,0)
+        self.velocity =  avango.gua.Vec3(0,0,0)
 ########################## End of Exercise 4.4
