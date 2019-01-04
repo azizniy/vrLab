@@ -23,6 +23,9 @@ def start():
     ## init scene
     scene = Scene(PARENT_NODE = scenegraph.Root.value)
 
+    print("SCENE OBJECT LIST")
+    print(len(scene.object_list))
+
 
     ## init navigation technique
     deviceInput = NewSpacemouseInput()
@@ -69,6 +72,7 @@ def start():
             NAVIGATION_NODE = viewingSetup.navigation_node,
             HEAD_NODE = viewingSetup.head_node,
             POINTER_INPUT = pointerInput,
+            TARGET_LIST = scene.object_list
             )
 
     elif hostname == "andromeda": # ASUS 3D mirror display
@@ -103,6 +107,7 @@ def start():
             NAVIGATION_NODE = viewingSetup.navigation_node,
             HEAD_NODE = viewingSetup.head_node,
             POINTER_INPUT = pointerInput,
+            TARGET_LIST = scene.object_list
             )
 
     elif hostname == "athena": # small powerwall workstation
@@ -137,6 +142,7 @@ def start():
             NAVIGATION_NODE = viewingSetup.navigation_node,
             HEAD_NODE = viewingSetup.head_node,
             POINTER_INPUT = pointerInput,
+            TARGET_LIST = scene.object_list
             )
 
 
@@ -170,6 +176,7 @@ def start():
             NAVIGATION_NODE = viewingSetup.navigation_node,
             HEAD_NODE = viewingSetup.head_node,
             POINTER_INPUT = pointerInput,
+            TARGET_LIST = scene.object_list
             )
 
             

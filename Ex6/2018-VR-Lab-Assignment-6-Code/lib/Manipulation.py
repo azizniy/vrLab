@@ -27,6 +27,7 @@ class ManipulationManager(avango.script.Script):
         NAVIGATION_NODE = None,
         HEAD_NODE = None,
         POINTER_INPUT = None,
+        TARGET_LIST = []
         ):
 
         
@@ -46,7 +47,7 @@ class ManipulationManager(avango.script.Script):
 
 
         self.goGo = GoGo()
-        self.goGo.my_constructor(SCENEGRAPH, NAVIGATION_NODE, HEAD_NODE, POINTER_INPUT)
+        self.goGo.my_constructor(SCENEGRAPH, NAVIGATION_NODE, HEAD_NODE, POINTER_INPUT, TARGET_LIST)
 
 
         self.virtualHand = VirtualHand()
@@ -55,7 +56,7 @@ class ManipulationManager(avango.script.Script):
     
         ### set initial states ###
         #change method
-        self.set_manipulation_technique(1) # switch to virtual-ray manipulation technique
+        self.set_manipulation_technique(2) # switch to virtual-ray manipulation technique
 
 
 
@@ -407,20 +408,13 @@ class DepthRay(ManipulationTechnique):
         ### parameters ###
         self.ray_length = 2.5 # in meter
         self.ray_thickness = 0.01 # in meter
-        self.depth_marker_size = 0.1
+        self.depth_marker_size = 0.07
         self.depth = 0
 
         self.pick_options =  avango.gua.PickingOptions.GET_POSITIONS \
                     | avango.gua.PickingOptions.GET_NORMALS \
                     | avango.gua.PickingOptions.GET_WORLD_POSITIONS \
                     | avango.gua.PickingOptions.GET_WORLD_NORMALS
-        
-        
-
-        
-        ### resources ###
-
-        ## To-Do: init (geometry) nodes here
 
 
         ### resources ###
@@ -445,24 +439,24 @@ class DepthRay(ManipulationTechnique):
     def update_ray_visualization(self):
 
         roll_angle = self.get_roll_angle(self.pointer_node.Transform.value)
-        # depth = self.map_roll_to_depth(roll_angle)
 
-        # print(roll_angle)
+        # increment depth according to roll angle - rate control
 
         depth_factor = 0.001
         self.depth -= (depth_factor * roll_angle);
 
+        # limit to ray length
         if self.depth > self.ray_length:
             self.depth = self.ray_length
         elif self.depth < 0:
             self.depth = 0
 
-        # print(self.depth)
 
         self.ray_geometry.Transform.value = \
             avango.gua.make_trans_mat(0.0,0.0,self.ray_length * -0.5) * \
             avango.gua.make_scale_mat(self.ray_thickness, self.ray_thickness, self.ray_length)
 
+        # render ball
         self.intersection_geometry.Transform.value = \
             avango.gua.make_trans_mat(0.0,0.0,-self.depth) * \
             avango.gua.make_scale_mat(self.depth_marker_size)
@@ -471,48 +465,23 @@ class DepthRay(ManipulationTechnique):
     def evaluate(self): # implement respective base-class function
         if self.enable_flag == False:
             return
-        # else:
-        #     self.update_ray_visualization()
 
-
-        ## calc ray intersection
+        ## calc ray intersections
         ManipulationTechnique.update_intersection(self, PICK_MAT = self.pointer_node.WorldTransform.value, PICK_LENGTH = self.ray_length) # call base-class function
 
-        self.depth_ball_selection() # call base-class function
+        # decide which object should be selected
+        self.depth_ball_selection() 
 
-
-                ## update visualizations
-        # if self.pick_result is None:
-        #     self.update_ray_visualization() # apply default ray visualization
-        # else:
-        #     _node = self.pick_result.Object.value # get intersected geometry node
-    
-        #     _pick_pos = self.pick_result.Position.value # pick position in object coordinate system
-        #     _pick_world_pos = self.pick_result.WorldPosition.value # pick position in world coordinate system
-    
-        #     _distance = self.pick_result.Distance.value * self.ray_length # pick distance in ray coordinate system
-    
-        #     #print(_node, _pick_pos, _pick_world_pos, _distance)
-        
-        #     self.update_ray_visualization(PICK_WORLD_POS = _pick_world_pos, PICK_DISTANCE = _distance)
-
+        # render
         self.update_ray_visualization()
 
-        
         ## possibly perform object dragging
         ManipulationTechnique.dragging(self) # call base-class function
 
-        # if len(self.mf_pick_result.value) > 0:
-        #     print(self.mf_pick_result.value[0].WorldPosition.value)
-
-
-
+    # compares ray intersections with ball position, returns object closest to ball
     def depth_ball_selection(self):
 
-
-        
         if len(self.mf_pick_result.value) > 0: # intersection found
-            # self.pick_result = self.mf_pick_result.value[0] # get first pick result
 
             # find closest object to ball
             closestThing = None
@@ -529,7 +498,6 @@ class DepthRay(ManipulationTechnique):
 
         else: # nothing hit
             self.pick_result = None
-
 
         ## disable previous node highlighting
         if self.selected_node is not None:
@@ -552,23 +520,6 @@ class DepthRay(ManipulationTechnique):
                 if _child_node.get_type() == 'av::gua::TriMeshNode':
                     _child_node.Material.value.set_uniform("enable_color_override", True)
                     _child_node.Material.value.set_uniform("override_color", avango.gua.Vec4(1.0,0.0,0.0,0.3)) # 30% color override
-       
-
-
-
-
-    
-
-    # else: # something hit
-    #     # update ray length and intersection point
-    #     self.ray_geometry.Transform.value = \
-    #         avango.gua.make_trans_mat(0.0,0.0,PICK_DISTANCE * -0.5) * \
-    #         avango.gua.make_scale_mat(self.ray_thickness, self.ray_thickness, PICK_DISTANCE)
-
-    #     self.intersection_geometry.Tags.value = [] # set intersection point visible
-    #     self.intersection_geometry.Transform.value = avango.gua.make_trans_mat(PICK_WORLD_POS) * avango.gua.make_scale_mat(self.intersection_point_size)
-        
-
 
 class GoGo(ManipulationTechnique):
 
@@ -582,6 +533,7 @@ class GoGo(ManipulationTechnique):
         NAVIGATION_NODE = None,
         HEAD_NODE = None,
         POINTER_INPUT = None,
+        TARGET_LIST = []
         ):
 
         ManipulationTechnique.my_constructor(self, SCENEGRAPH, NAVIGATION_NODE, POINTER_INPUT) # call base class constructor
@@ -589,29 +541,88 @@ class GoGo(ManipulationTechnique):
 
         ### external references ###
         self.HEAD_NODE = HEAD_NODE
+
+        self.target_list = TARGET_LIST
+
+        self.selected_node = None
+
+
+        self.body_node = avango.gua.nodes.TransformNode(Name = "pointer_node")
+        self.body_node.Tags.value = ["invisible"]
+        self.body_node.Transform.value = avango.gua.make_trans_mat(0.1,-0.5,-0.3)
+        self.HEAD_NODE.Children.value.append(self.body_node)
         
 
         ### parameters ###  
-        self.intersection_point_size = 0.03 # in meter
+        self.intersection_point_size = 2.000 # in meter
         self.gogo_threshold = 0.35 # in meter
 
 
         ### resources ###
+        _loader = avango.gua.nodes.TriMeshLoader()
  
         ## To-Do: init (geometry) nodes here
+        self.hand_geometry = _loader.create_geometry_from_file("hand_geometry", "data/objects/hand.obj", avango.gua.LoaderFlags.DEFAULTS)
+        self.hand_geometry.Transform.value = \
+                    avango.gua.make_scale_mat(self.intersection_point_size, self.intersection_point_size, self.intersection_point_size)
+        self.hand_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(1.0,0.0,0.0,1.0))
+        self.pointer_node.Children.value.append(self.hand_geometry)
  
         ### set initial states ###
         self.enable(False)
 
+    def update_ray_visualization(self):
 
+        # render hand
+        self.hand_geometry.Transform.value = \
+                    avango.gua.make_scale_mat(self.intersection_point_size, self.intersection_point_size, self.intersection_point_size)
 
     ### callback functions ###
     def evaluate(self): # implement respective base-class function
         if self.enable_flag == False:
             return
 
-        ## To-Do: implement Go-Go technique here
 
+        print(len(self.target_list))
+
+        # distance from body
+        dist = (self.body_node.WorldTransform.value.get_translate() - self.pointer_node.WorldTransform.value.get_translate()).length()
+
+        _hand_pos = self.pointer_node.WorldTransform.value.get_translate()
+
+                ## disable previous node highlighting
+        if self.selected_node is not None:
+            for _child_node in self.selected_node.Children.value:
+                if _child_node.get_type() == 'av::gua::TriMeshNode':
+                    _child_node.Material.value.set_uniform("enable_color_override", False)
+    
+        self.selected_node = None
+        for _node in self.target_list: # iterate over all target nodes
+            _bb = _node.BoundingBox.value # get bounding box of a node
+            
+            if _bb.contains(_hand_pos) == True: # hook inside bounding box of this node
+                self.selected_node = _node
+                break
+
+
+        ## enable node highlighting
+        if self.selected_node is not None:
+            for _child_node in self.selected_node.Children.value:
+                if _child_node.get_type() == 'av::gua::TriMeshNode':
+                    _child_node.Material.value.set_uniform("enable_color_override", True)
+                    _child_node.Material.value.set_uniform("override_color", avango.gua.Vec4(1.0,0.0,0.0,0.3)) # 30% color override
+
+
+        ## possibly perform object dragging
+        ManipulationTechnique.dragging(self) # call base-class function
+
+        self.update_ray_visualization()
+
+
+        ## To-Do: implement Go-Go technique here
+        # 0.5-0.35 = 0.15
+        # e^2     0.15*0.15 0,0225
+        # 0,025+0,35=0,3725
             
 
 class VirtualHand(ManipulationTechnique):
