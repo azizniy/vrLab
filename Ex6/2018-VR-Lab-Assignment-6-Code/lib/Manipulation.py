@@ -555,20 +555,26 @@ class GoGo(ManipulationTechnique):
         self.HEAD_NODE.Children.value.append(self.body_node)
 
 
+
+
+        self.gogo_hand_node = avango.gua.nodes.TransformNode(Name = "gogo_hand_node")
+        self.gogo_hand_node.Transform.value = avango.gua.make_trans_mat(0.0,0.0,0.0)
+        self.pointer_node.Children.value.append(self.gogo_hand_node)
+
         self.hand_end_node = avango.gua.nodes.TransformNode(Name = "hand_end_node")
         self.hand_end_node.Tags.value = ["invisible"]
-        self.hand_end_node.Transform.value = avango.gua.make_trans_mat(0.0,0.0,-0.1)
-        self.pointer_node.Children.value.append(self.hand_end_node)
+        self.hand_end_node.Transform.value = avango.gua.make_trans_mat(0.0,0.0,-0.2)
+        self.gogo_hand_node.Children.value.append(self.hand_end_node)
         
 
         ### parameters ###  
         self.intersection_point_size = 2.000 # in meter
-        self.gogo_threshold = 0.7 # in meter
+        self.gogo_threshold = 0.5 # in meter
 
         self.gogo_vec = avango.gua.Vec3(0.0,0.0,-1.0)
         self.gogoindex = 0
         self.factor = 0
-        self.k = 10
+        self.k = 15
 
 
         ### resources ###
@@ -579,17 +585,14 @@ class GoGo(ManipulationTechnique):
         self.hand_geometry.Transform.value = \
                     avango.gua.make_scale_mat(self.intersection_point_size, self.intersection_point_size, self.intersection_point_size)
         self.hand_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(1.0,0.0,0.0,1.0))
-        self.pointer_node.Children.value.append(self.hand_geometry)
+        self.gogo_hand_node.Children.value.append(self.hand_geometry)
  
         ### set initial states ###
         self.enable(False)
 
     def update_hand_visualization(self):
 
-        # render hand
-        self.hand_geometry.Transform.value =  \
-                    avango.gua.make_trans_mat(self.gogo_vec*self.factor) *\
-                   avango.gua.make_scale_mat(self.intersection_point_size, self.intersection_point_size, self.intersection_point_size)
+        self.gogo_hand_node.Transform.value = avango.gua.make_trans_mat(self.gogo_vec*self.factor) 
 
 
     ### callback functions ###
@@ -600,31 +603,20 @@ class GoGo(ManipulationTechnique):
         # distance from body
 
         body_ps = self.body_node.WorldTransform.value * avango.gua.make_inverse_mat(self.pointer_node.WorldTransform.value )
-        # body_pos_ps = body_ps.get_translate()
         body_pos_ps = body_ps * avango.gua.Vec4(0,0,0,1.0)
         body_pos_ps = avango.gua.Vec3(body_pos_ps.x,body_pos_ps.y,body_pos_ps.z)
 
-
-        # print(body_pos_ps)
-
-        # self.gogo_vec_ws = (self.body_node.WorldTransform.value.get_translate() - self.pointer_node.WorldTransform.value.get_translate())
-
         self.gogo_vec = avango.gua.Vec3(0,0,0) - body_pos_ps
 
-        # self.gogo_vec = avango.gua.Vec4(self.gogo_vec_ws.x,self.gogo_vec_ws.y,self.gogo_vec_ws.z,1.0) * self.pointer_node.WorldTransform.value
-        # self.gogo_vec = avango.gua.Vec3(self.gogo_vec_ws.x,self.gogo_vec_ws.y,self.gogo_vec_ws.z)
-
-        dist = self.gogo_vec.length()
-        # self.gogo_vec = self.gogo_vec/dist
-
-
-        print('gogo' + str(self.gogoindex) + ' dist:' + str(dist))
+        # dist = self.gogo_vec.length()
+        dist = (self.body_node.WorldTransform.value.get_translate() - self.pointer_node.WorldTransform.value.get_translate())
+        dist.y = 0
+        dist.x=0
+        dist = dist.length()
 
 
         self.gogoindex += 1
         if dist > self.gogo_threshold:
-            # print('body pos ' + str(self.body_node.WorldTransform.value.get_translate() ))
-            # print('pointer pos ' + str(self.pointer_node.WorldTransform.value.get_translate() ))
             new_dist  = dist + self.k * (dist - self.gogo_threshold)**2
             self.factor = new_dist/dist - 1
 
@@ -637,7 +629,7 @@ class GoGo(ManipulationTechnique):
 
 
         # check for intersection at hand origin and end of hand
-        _hand_pos = self.pointer_node.WorldTransform.value.get_translate()
+        _hand_pos = self.gogo_hand_node.WorldTransform.value.get_translate()
         _hand_end_pos = self.hand_end_node.WorldTransform.value.get_translate()
 
                 ## disable previous node highlighting
@@ -664,15 +656,23 @@ class GoGo(ManipulationTechnique):
 
 
         ## possibly perform object dragging
-        ManipulationTechnique.dragging(self) # call base-class function
+        self.dragging() # call base-class function
 
         self.update_hand_visualization()
 
 
-        ## To-Do: implement Go-Go technique here
-        # 0.5-0.35 = 0.15
-        # e^2     0.15*0.15 0,0225
-        # 0,025+0,35=0,3725
+
+    def dragging(self):
+        if self.dragged_node is not None: # object to drag
+            _new_mat = self.gogo_hand_node.WorldTransform.value * self.dragging_offset_mat # new object position in world coodinates
+            _new_mat = avango.gua.make_inverse_mat(self.dragged_node.Parent.value.WorldTransform.value) * _new_mat # transform new object matrix from global to local space
+        
+            self.dragged_node.Transform.value = _new_mat
+
+    def start_dragging(self, NODE):
+        self.dragged_node = NODE        
+        self.dragging_offset_mat = avango.gua.make_inverse_mat(self.gogo_hand_node.WorldTransform.value) * self.dragged_node.WorldTransform.value # object transformation in pointer coordinate system
+
             
 
 class VirtualHand(ManipulationTechnique):
@@ -705,17 +705,24 @@ class VirtualHand(ManipulationTechnique):
         ### resources ###
         _loader = avango.gua.nodes.TriMeshLoader()
 
+        self.prism_hand_node = avango.gua.nodes.TransformNode(Name = "gogo_hand_node")
+        self.prism_hand_node.Transform.value = avango.gua.make_trans_mat(0.0,0.0,0.0)
+        self.pointer_node.Children.value.append(self.prism_hand_node)
+
         ## To-Do: init (geometry) nodes here
         self.hand_geometry = _loader.create_geometry_from_file("hand_geometry", "data/objects/hand.obj", avango.gua.LoaderFlags.DEFAULTS)
         self.hand_geometry.Transform.value = \
                         avango.gua.make_scale_mat(self.intersection_point_size, self.intersection_point_size, self.intersection_point_size)
         self.hand_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(1.0,0.0,0.0,1.0))
-        self.pointer_node.Children.value.append(self.hand_geometry)
+        self.prism_hand_node.Children.value.append(self.hand_geometry)
 
         self.last_frame_time = time.time()
 
         self.last_position = avango.gua.Vec3(0,0,0)
+        # self.last_rotation = avango.gua.Quat()
+
         self.hand_translate =  avango.gua.Vec3(0,0,0)
+        # self.hand_rotate = avango.gua.Vec3(0,0,0)
 
         self.factor = 1
 
@@ -725,7 +732,7 @@ class VirtualHand(ManipulationTechnique):
     def update_hand_visualization(self):
 
         # render hand
-        self.hand_geometry.Transform.value = avango.gua.make_trans_mat(self.hand_translate) * \
+        self.prism_hand_node.Transform.value = avango.gua.make_trans_mat(self.hand_translate) * \
                         avango.gua.make_scale_mat(self.intersection_point_size, self.intersection_point_size, self.intersection_point_size)
 
 
@@ -741,47 +748,56 @@ class VirtualHand(ManipulationTechnique):
         self.last_frame_time = frame_time
 
         _hand_pos = self.pointer_node.Transform.value.get_translate()
+        # _hand_rot = self.pointer_node.Transform.value.get_rotate() 
 
         diff = _hand_pos - self.last_position
+        # rot = _hand_rot - self.last_rotation
 
         move_speed = (_hand_pos - self.last_position).length() / frame_duration
+        # move_speed = (_hand_pos - self.last_position) / frame_duration #m/s
+
 
 
         print(move_speed)
 
 
         if(move_speed < self.min_vel):
-            # print(move_speed)
+            print('still')
             # self.factor = 0
             self.hand_translate -= diff
+            self.hand_rotate -= rot
         else:
             # self.factor = 1
             self.hand_translate = avango.gua.Vec3(0,0,0)
+            self.hand_rotate = avango.gua.Vec3(0,0,0)
+
 
 
                 # disable previous node highlighting
-        if self.selected_node is not None:
-            for _child_node in self.selected_node.Children.value:
-                if _child_node.get_type() == 'av::gua::TriMeshNode':
-                    _child_node.Material.value.set_uniform("enable_color_override", False)
+        # if self.selected_node is not None:
+        #     for _child_node in self.selected_node.Children.value:
+        #         if _child_node.get_type() == 'av::gua::TriMeshNode':
+        #             _child_node.Material.value.set_uniform("enable_color_override", False)
     
-        self.selected_node = None
-        for _node in self.target_list: # iterate over all target nodes
-            _bb = _node.BoundingBox.value # get bounding box of a node
+        # self.selected_node = None
+        # for _node in self.target_list: # iterate over all target nodes
+        #     _bb = _node.BoundingBox.value # get bounding box of a node
             
-            if _bb.contains(_hand_pos) == True: # hook inside bounding box of this node
-                self.selected_node = _node
-                break
+        #     if _bb.contains(_hand_pos) == True: # hook inside bounding box of this node
+        #         self.selected_node = _node
+        #         break
 
-        ## enable node highlighting
-        if self.selected_node is not None:
-            for _child_node in self.selected_node.Children.value:
-                if _child_node.get_type() == 'av::gua::TriMeshNode':
-                    _child_node.Material.value.set_uniform("enable_color_override", True)
-                    _child_node.Material.value.set_uniform("override_color", avango.gua.Vec4(1.0,0.0,0.0,0.3)) # 30% color override
+        # ## enable node highlighting
+        # if self.selected_node is not None:
+        #     for _child_node in self.selected_node.Children.value:
+        #         if _child_node.get_type() == 'av::gua::TriMeshNode':
+        #             _child_node.Material.value.set_uniform("enable_color_override", True)
+        #             _child_node.Material.value.set_uniform("override_color", avango.gua.Vec4(1.0,0.0,0.0,0.3)) # 30% color override
 
 
         self.last_position = _hand_pos
+        # self.last_rotation = _hand_rot
+
 
         self.update_hand_visualization()
 
