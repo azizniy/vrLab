@@ -443,7 +443,7 @@ class DepthRay(ManipulationTechnique):
 
         # increment depth according to roll angle - rate control
 
-        depth_factor = 0.001
+        depth_factor = 0.0003
         self.depth -= (depth_factor * roll_angle);
 
         # limit to ray length
@@ -693,10 +693,10 @@ class VirtualHand(ManipulationTechnique):
 
 
         ### parameters ###
-        self.intersection_point_size = 2 # in meter
+        self.intersection_point_size = 1 # in meter
+        self.ref_ball_size = 0.01
 
-        # self.min_vel = 0.01 / 60.0 # in meter/sec
-        self.min_vel = 0.5 # in meter/sec
+        self.min_vel = 0.01 / 60.0 # in meter/sec
         self.sc_vel = 0.15 / 60.0 # in meter/sec
         self.max_vel = 0.25 / 60.0 # in meter/sec
 
@@ -716,24 +716,39 @@ class VirtualHand(ManipulationTechnique):
         self.hand_geometry.Material.value.set_uniform("Color", avango.gua.Vec4(1.0,0.0,0.0,1.0))
         self.prism_hand_node.Children.value.append(self.hand_geometry)
 
+
+        # reference ball
+        self.ref_ball = _loader.create_geometry_from_file("ref_ball", "data/objects/sphere.obj", avango.gua.LoaderFlags.DEFAULTS)
+        self.ref_ball.Transform.value = \
+                        avango.gua.make_scale_mat(self.ref_ball_size, self.ref_ball_size, self.ref_ball_size)
+        self.ref_ball.Material.value.set_uniform("Color", avango.gua.Vec4(1.0,1.0,1.0,1.0))
+        self.pointer_node.Children.value.append(self.ref_ball)
+        
+
         self.last_frame_time = time.time()
 
         self.last_position = avango.gua.Vec3(0,0,0)
-        # self.last_rotation = avango.gua.Quat()
-
         self.hand_translate =  avango.gua.Vec3(0,0,0)
-        # self.hand_rotate = avango.gua.Vec3(0,0,0)
 
-        self.factor = 1
 
         ### set initial states ###
         self.enable(False)
 
     def update_hand_visualization(self):
 
+        # take rotate from pointer node and apply it to prism hand node
+        rotate = self.pointer_node.Transform.value.get_rotate()
+
+        self.pointer_node.Transform.value = \
+            avango.gua.make_trans_mat(self.pointer_node.Transform.value.get_translate()) * \
+            avango.gua.make_scale_mat(self.pointer_node.Transform.value.get_scale())
+
         # render hand
         self.prism_hand_node.Transform.value = avango.gua.make_trans_mat(self.hand_translate) * \
+                                avango.gua.make_rot_mat(rotate) * \
                         avango.gua.make_scale_mat(self.intersection_point_size, self.intersection_point_size, self.intersection_point_size)
+
+
 
 
 
@@ -744,64 +759,95 @@ class VirtualHand(ManipulationTechnique):
 
         frame_time = time.time()
         frame_duration = frame_time - self.last_frame_time
-        # frame_rate = 1.0 / frame_duration
         self.last_frame_time = frame_time
 
-        _hand_pos = self.pointer_node.Transform.value.get_translate()
-        # _hand_rot = self.pointer_node.Transform.value.get_rotate() 
+        pointer_pos = self.pointer_node.Transform.value.get_translate()
 
-        diff = _hand_pos - self.last_position
-        # rot = _hand_rot - self.last_rotation
+        frame_movement = pointer_pos - self.last_position
 
-        move_speed = (_hand_pos - self.last_position).length() / frame_duration
-        # move_speed = (_hand_pos - self.last_position) / frame_duration #m/s
+        move_speed = (pointer_pos - self.last_position) / (frame_duration * 60) #m/s
 
 
+        self.hand_translate.x = self.update_offset(self.hand_translate.x, frame_movement.x, frame_duration)
+        self.hand_translate.y = self.update_offset(self.hand_translate.y, frame_movement.y, frame_duration)
+        self.hand_translate.z = self.update_offset(self.hand_translate.z, frame_movement.z, frame_duration)
 
-        print(move_speed)
-
-
-        if(move_speed < self.min_vel):
-            print('still')
-            # self.factor = 0
-            self.hand_translate -= diff
-            self.hand_rotate -= rot
-        else:
-            # self.factor = 1
-            self.hand_translate = avango.gua.Vec3(0,0,0)
-            self.hand_rotate = avango.gua.Vec3(0,0,0)
-
-
-
-                # disable previous node highlighting
-        # if self.selected_node is not None:
-        #     for _child_node in self.selected_node.Children.value:
-        #         if _child_node.get_type() == 'av::gua::TriMeshNode':
-        #             _child_node.Material.value.set_uniform("enable_color_override", False)
+        _hand_pos = self.prism_hand_node.WorldTransform.value.get_translate() 
+        #         # disable previous node highlighting
+        if self.selected_node is not None:
+            for _child_node in self.selected_node.Children.value:
+                if _child_node.get_type() == 'av::gua::TriMeshNode':
+                    _child_node.Material.value.set_uniform("enable_color_override", False)
     
-        # self.selected_node = None
-        # for _node in self.target_list: # iterate over all target nodes
-        #     _bb = _node.BoundingBox.value # get bounding box of a node
+        self.selected_node = None
+        for _node in self.target_list: # iterate over all target nodes
+            _bb = _node.BoundingBox.value # get bounding box of a node
             
-        #     if _bb.contains(_hand_pos) == True: # hook inside bounding box of this node
-        #         self.selected_node = _node
-        #         break
+            if _bb.contains(_hand_pos) == True: # hook inside bounding box of this node
+                self.selected_node = _node
+                break
 
-        # ## enable node highlighting
-        # if self.selected_node is not None:
-        #     for _child_node in self.selected_node.Children.value:
-        #         if _child_node.get_type() == 'av::gua::TriMeshNode':
-        #             _child_node.Material.value.set_uniform("enable_color_override", True)
-        #             _child_node.Material.value.set_uniform("override_color", avango.gua.Vec4(1.0,0.0,0.0,0.3)) # 30% color override
-
-
-        self.last_position = _hand_pos
-        # self.last_rotation = _hand_rot
+        ## enable node highlighting
+        if self.selected_node is not None:
+            for _child_node in self.selected_node.Children.value:
+                if _child_node.get_type() == 'av::gua::TriMeshNode':
+                    _child_node.Material.value.set_uniform("enable_color_override", True)
+                    _child_node.Material.value.set_uniform("override_color", avango.gua.Vec4(1.0,0.0,0.0,0.3)) # 30% color override
 
 
-        self.update_hand_visualization()
+        self.last_position = pointer_pos
 
 
-        ## To-Do: implement Virtual Hand (with PRISM filter) technique here
+
+
+
          ## possibly perform object dragging
         ManipulationTechnique.dragging(self) # call base-class function
+        self.update_hand_visualization()
+
+    def update_offset(self, current_offset, frame_movement, frame_duration) :
+
+        move_speed = abs(frame_movement) / (frame_duration * 60)
+
+        if move_speed > self.max_vel and abs(current_offset) > 0:
+
+            # recovery
+
+            print("recovery")
+            print(abs(current_offset))
+            return current_offset *0.9
+
+        else :
+            return current_offset - (frame_movement * self.get_factor_value(move_speed))
+
+    def get_factor_value(self,move_speed):
+        if(move_speed < self.min_vel):
+            factor = 1
+        elif move_speed < self.sc_vel:
+            factor = self.map_speed_to_movement_factor(move_speed)
+
+        else :
+            factor = 0
+        return factor
+
+
+    def map_speed_to_movement_factor(self, input):
+        min_in = self.min_vel
+        min_out = self.sc_vel
+        max_in = 0
+        max_out = 1
+        output = max_in + ((max_out - max_in) / (min_out - min_in)) * (input - min_in)
+        return (1-output)
+
+    def dragging(self):
+        if self.dragged_node is not None: # object to drag
+            _new_mat = self.prism_hand_node.WorldTransform.value * self.dragging_offset_mat # new object position in world coodinates
+            _new_mat = avango.gua.make_inverse_mat(self.dragged_node.Parent.value.WorldTransform.value) * _new_mat # transform new object matrix from global to local space
+        
+            self.dragged_node.Transform.value = _new_mat
+
+    # def start_dragging(self, NODE):
+    #     self.dragged_node = NODE        
+    #     self.dragging_offset_mat = avango.gua.make_inverse_mat(self.prism_hand_node.WorldTransform.value) * self.dragged_node.WorldTransform.value # object transformation in pointer coordinate system
+
+            
