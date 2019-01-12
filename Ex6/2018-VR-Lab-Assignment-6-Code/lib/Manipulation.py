@@ -57,7 +57,7 @@ class ManipulationManager(avango.script.Script):
     
         ### set initial states ###
         #change method
-        self.set_manipulation_technique(3) # switch to virtual-ray manipulation technique
+        self.set_manipulation_technique(1) # switch to virtual-ray manipulation technique
 
 
 
@@ -128,6 +128,7 @@ class ManipulationTechnique(avango.script.Script):
                 
         self.mf_pick_result = []
         self.pick_result = None # chosen pick result
+        self.ray_selected_objects = None
         self.white_list = []   
         self.black_list = ["invisible"]
 
@@ -482,10 +483,10 @@ class DepthRay(ManipulationTechnique):
     # compares ray intersections with ball position, returns object closest to ball
     def depth_ball_selection(self):
 
+        closestThing = None
+
         if len(self.mf_pick_result.value) > 0: # intersection found
 
-            # find closest object to ball
-            closestThing = None
             min_distance = sys.float_info.max
             for thing in self.mf_pick_result.value:
 
@@ -495,18 +496,25 @@ class DepthRay(ManipulationTechnique):
                     min_distance = distance
                     closestThing = thing
 
+
             self.pick_result = closestThing
 
         else: # nothing hit
             self.pick_result = None
 
-        ## disable previous node highlighting
-        if self.selected_node is not None:
-            for _child_node in self.selected_node.Children.value:
-                if _child_node.get_type() == 'av::gua::TriMeshNode':
-                    _child_node.Material.value.set_uniform("enable_color_override", False)
+        # create list of parent nodes of intersected geometry
+        ray_object_parents = []
+        if len(self.mf_pick_result.value) > 0: # intersection found
+            for thing in self.mf_pick_result.value: 
+                node = thing.Object.value # get intersected geometry node
+                node = node.Parent.value # take the parent node of the geomtry node (the whole object)
+                ray_object_parents.append(node)
+        # remove duplicates
+        ray_object_parents = set(ray_object_parents)
+        ray_object_parents = list(ray_object_parents)
 
 
+        # save selected node
         if self.pick_result is not None: # something was hit
             self.selected_node = self.pick_result.Object.value # get intersected geometry node
             self.selected_node = self.selected_node.Parent.value # take the parent node of the geomtry node (the whole object)
@@ -514,13 +522,45 @@ class DepthRay(ManipulationTechnique):
         else:
             self.selected_node = None
 
+        # unhighlight everything in ray path, that is not intersected on this frame
+        if self.ray_selected_objects is not None: 
+            for thing in self.ray_selected_objects.value :
+                geom_node = thing.Object.value # get intersected geometry node
+                geom_parent_node = geom_node.Parent.value # take the parent node of the geomtry node (the whole object)
 
-        ## enable node highlighting
+                # check if parent is in new list of intersected objects
+                should_unhighlight = True
+                for hl_node in ray_object_parents :
+                    if hl_node == geom_parent_node:
+                        should_unhighlight = False
+                        break
+
+                if should_unhighlight :
+                    for _child_node in geom_parent_node.Children.value:
+                        if _child_node.get_type() == 'av::gua::TriMeshNode':
+                            _child_node.Material.value.set_uniform("enable_color_override", False)
+
+        # save new list of intersected objects
+        self.ray_selected_objects = self.mf_pick_result
+
+        # highlight everything in ray path apart from closest thing
+        if self.ray_selected_objects is not None: 
+            for thing in self.ray_selected_objects.value:
+                node_to_colour = thing.Object.value # get intersected geometry node
+                node_to_colour = node_to_colour.Parent.value # take the parent node of the geomtry node (the whole object)
+                if node_to_colour != self.selected_node :
+                    for _child_node in node_to_colour.Children.value:
+                        if _child_node.get_type() == 'av::gua::TriMeshNode':
+                            _child_node.Material.value.set_uniform("enable_color_override", True)
+                            _child_node.Material.value.set_uniform("override_color", avango.gua.Vec4(1.0,0.0,0.0,0.3)) # 30% color override
+
+
+        ## highlight closest node in yellow
         if self.selected_node is not None:
             for _child_node in self.selected_node.Children.value:
                 if _child_node.get_type() == 'av::gua::TriMeshNode':
                     _child_node.Material.value.set_uniform("enable_color_override", True)
-                    _child_node.Material.value.set_uniform("override_color", avango.gua.Vec4(1.0,0.0,0.0,0.3)) # 30% color override
+                    _child_node.Material.value.set_uniform("override_color", avango.gua.Vec4(1.0,0,0.0,1.0))
 
 class GoGo(ManipulationTechnique):
 
@@ -550,7 +590,6 @@ class GoGo(ManipulationTechnique):
 
         self.body_node = avango.gua.nodes.TransformNode(Name = "body_node")
         self.body_node.Tags.value = ["invisible"]
-        # self.body_node.Transform.value = avango.gua.make_trans_mat(0.1,-0.5,-0.3)
         self.body_node.Transform.value = avango.gua.make_trans_mat(0.0,-0.3,-0.1)
         self.HEAD_NODE.Children.value.append(self.body_node)
 
@@ -810,11 +849,6 @@ class VirtualHand(ManipulationTechnique):
         move_speed = abs(frame_movement) / (frame_duration * 60)
 
         if move_speed > self.max_vel and abs(current_offset) > 0:
-
-            # recovery
-
-            print("recovery")
-            print(abs(current_offset))
             return current_offset *0.9
 
         else :
